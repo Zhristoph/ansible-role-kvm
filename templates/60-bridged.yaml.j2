@@ -1,0 +1,25 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    {{ main_interface }}:
+      addresses: []
+  bridges:
+    br0:
+      interfaces: [ "{{ main_interface }}" ]
+{% if main_macaddress is defined %}
+      macaddress: "{{ main_macaddress }}"
+{% endif %}
+      addresses:
+        - "{{ main_ip4 }}"
+        - "{{ main_ip6 }}"
+      gateway4: "{{ main_gateway4 }}"
+      gateway6: "{{ main_gateway6 }}"
+      nameservers:
+        addresses:
+          - "{{ nameserver_first4 }}"
+          - "{{ nameserver_second4 }}"
+          - "{{ nameserver_first6 }}"
+          - "{{ nameserver_second6 }}"
+      parameters:
+        stp: false

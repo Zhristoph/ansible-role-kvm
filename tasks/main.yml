@@ -1,0 +1,47 @@
+---
+- name: Set virtualization packages
+  tags: virtualization
+  set_fact:
+    virtPackages:
+      - bridge-utils 
+      - hddtemp
+      - libvirt-clients
+      - libvirt-daemon-system
+      - lm-sensors
+      - python3-libvirt
+      - python3-lxml
+      - qemu
+      - qemu-kvm
+      - virtinst
+      - vmdb2
+      - xfsprogs
+
+- name: Install virtualization software
+  tags: virtualization
+  apt:
+    name: "{{ virtPackages }}"
+
+#- name: Deploy network config
+#  tags: network
+#  template:
+#    src: "60-{{ networkMode }}.yaml.j2"
+#    dest: /etc/netplan/60-netcfg.yaml
+  
+- name: Create virtual br0 network
+  tags: networkbr0
+  virt_net:
+    command: create
+    name: br0
+    state: active
+    autostart: yes
+  when: networkMode == "bridged"
+
+- name: Add virtual br0 network
+  tags: networkbr0
+  virt_net:
+    command: define
+    xml: '{{ lookup("template", "bridge.xml.j2") }}'
+    name: br0
+    state: active
+    autostart: yes
+  when: networkMode == "bridged"
