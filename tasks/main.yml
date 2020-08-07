@@ -1,47 +1,39 @@
 ---
-- name: Set virtualization packages
-  tags: virtualization
+- name: Set OpenVSwitch packages
+  tags: openvswitch
   set_fact:
-    virtPackages:
-      - bridge-utils 
-      - hddtemp
-      - libvirt-clients
-      - libvirt-daemon-system
-      - lm-sensors
-      - python3-libvirt
-      - python3-lxml
-      - qemu
-      - qemu-kvm
-      - virtinst
-      - vmdb2
-      - xfsprogs
+    openVSwitchPackages:
+        openvswitch-switch
 
-- name: Install virtualization software
-  tags: virtualization
+- name: Install OpenVSwitch software
+  tags: openvswitch
   apt:
-    name: "{{ virtPackages }}"
+    name: "{{ openVSwitchPackages }}"
 
-#- name: Deploy network config
-#  tags: network
-#  template:
-#    src: "60-{{ networkMode }}.yaml.j2"
-#    dest: /etc/netplan/60-netcfg.yaml
-  
-- name: Create virtual br0 network
-  tags: networkbr0
-  virt_net:
-    command: create
-    name: br0
-    state: active
-    autostart: yes
-  when: networkMode == "bridged"
+- name: Create OpenVSwitch bridges
+  tags: openvswitch
+  openvswitch_bridge:
+    bridge: "{{ item.bridge }}"
+    state: present
+  loop: "{{ openVSwitchConfig }}"
 
-- name: Add virtual br0 network
-  tags: networkbr0
-  virt_net:
-    command: define
-    xml: '{{ lookup("template", "bridge.xml.j2") }}'
-    name: br0
-    state: active
-    autostart: yes
-  when: networkMode == "bridged"
+- name: Add port to OpenVSwitch bridges 
+  tags: openvswitch
+  openvswitch_port:
+    bridge: "{{ item.0.bridge }}"
+    port: "{{ item.1 }}"
+    state: present
+  with_subelements:
+    - "{{ openVSwitchConfig }}"
+    - port
+
+- name: Add VLANs to OpenVSwitch bridges 
+  tags: openvswitch
+  openvswitch_bridge:
+    bridge: "VLAN{{ item.1 }}"
+    parent: "{{ item.0.bridge }}"
+    vlan: "{{ item.1 }}"
+    state: present
+  with_subelements:
+    - "{{ openVSwitchConfig }}"
+    - vlan
