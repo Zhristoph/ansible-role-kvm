@@ -76,17 +76,24 @@
     name: mainPool
     xml: '{{ lookup("template", "mainPool.xml") }}'
 
+- name: Get mainPool storage facts
+  tags: config3
+  virt_pool:
+    command: facts
+
 - name: Build mainPool storage
   tags: virtualization, config2
   virt_pool:
     command: build
     name: mainPool
+  when: ansible_libvirt_pools.mainPool.status != "running"
 
 - name: Start mainPool storage
   tags: virtualization, config2
   virt_pool:
     command: create
     name: mainPool
+  when: ansible_libvirt_pools.mainPool.status != "running"
 
 - name: Activate mainPool storage
   tags: virtualization, config2
