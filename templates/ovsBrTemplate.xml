@@ -1,0 +1,16 @@
+<network connections='1'>
+  <name>{{ item.bridge }}</name>
+  <forward mode='bridge'/>
+  <bridge name='{{ item.bridge }}'/>
+  <virtualport type='openvswitch'/>
+{% for vlanNumber in item.vlan -%}	  
+  <portgroup name='VLAN{{ vlanNumber }}'>
+    <vlan>
+	    <tag id='{{ vlanNumber }}'/>
+    </vlan>
+  </portgroup>
+{%- endfor %}	  
+  <portgroup name='UnTagged'>
+  </portgroup>
+</network>
+
