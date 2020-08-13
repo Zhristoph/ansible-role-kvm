@@ -21,27 +21,76 @@
   apt:
     name: "{{ virtPackages }}"
 
-#- name: Deploy network config
-#  tags: network
-#  template:
-#    src: "60-{{ networkMode }}.yaml.j2"
-#    dest: /etc/netplan/60-netcfg.yaml
-  
-- name: Create virtual br0 network
-  tags: networkbr0
+- name: Create virtual networks
+  tags: networkovs
   virt_net:
-    command: create
     name: br0
-    state: active
+    xml: '{{ lookup("template", "bridge.xml") }}'
+    state: present
+  when: networkMode == "bridged"
+
+- name: Autostart virtual networks
+  tags: networkovs
+  virt_net:
+    name: br0
     autostart: yes
   when: networkMode == "bridged"
 
-- name: Add virtual br0 network
-  tags: networkbr0
+- name: Activate virtual networks
+  tags: networkovs
   virt_net:
-    command: define
-    xml: '{{ lookup("template", "bridge.xml.j2") }}'
     name: br0
     state: active
-    autostart: yes
   when: networkMode == "bridged"
+
+- name: Create virtual networks
+  tags: networkovs
+  virt_net:
+    name: "{{ item.bridge }}"
+    xml: '{{ lookup("template", "ovsBrTemplate.xml") }}'
+    state: present
+  loop: "{{ openVSwitchConfig }}"
+  when: networkMode == "openVSwitch"
+
+- name: Autostart virtual networks
+  tags: networkovs
+  virt_net:
+    name: "{{ item.bridge }}"
+    autostart: yes
+  loop: "{{ openVSwitchConfig }}"
+  when: networkMode == "openVSwitch"
+
+- name: Activate virtual networks
+  tags: networkovs
+  virt_net:
+    name: "{{ item.bridge }}"
+    state: active
+  loop: "{{ openVSwitchConfig }}"
+  when: networkMode == "openVSwitch"
+
+- name: Define mainPool storage in libvirt
+  tags: virtualization, config2
+  virt_pool:
+    autostart: yes
+    command: define
+    name: mainPool
+    xml: '{{ lookup("template", "mainPool.xml") }}'
+
+- name: Build mainPool storage
+  tags: virtualization, config2
+  virt_pool:
+    command: build
+    name: mainPool
+
+- name: Start mainPool storage
+  tags: virtualization, config2
+  virt_pool:
+    command: create
+    name: mainPool
+
+- name: Activate mainPool storage
+  tags: virtualization, config2
+  virt_pool:
+    state: active
+    name: mainPool
+
