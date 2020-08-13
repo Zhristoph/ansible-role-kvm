@@ -1,6 +1,6 @@
 ---
 - name: Set virtualization packages
-  tags: virtualization
+  tags: kvm
   set_fact:
     virtPackages:
       - bridge-utils 
@@ -17,34 +17,34 @@
       - xfsprogs
 
 - name: Install virtualization software
-  tags: virtualization
+  tags: kvm
   apt:
     name: "{{ virtPackages }}"
 
-- name: Create virtual networks
-  tags: networkovs
+- name: Create virtual bridge networks
+  tags: kvm, network, bridged
   virt_net:
     name: br0
     xml: '{{ lookup("template", "bridge.xml") }}'
     state: present
   when: networkMode == "bridged"
 
-- name: Autostart virtual networks
-  tags: networkovs
+- name: Autostart virtual bridge networks
+  tags: kvm, network, bridged
   virt_net:
     name: br0
     autostart: yes
   when: networkMode == "bridged"
 
-- name: Activate virtual networks
-  tags: networkovs
+- name: Activate virtual bridge networks
+  tags: kvm, network, bridged
   virt_net:
     name: br0
     state: active
   when: networkMode == "bridged"
 
 - name: Create virtual networks
-  tags: networkovs
+  tags: kvm, network, ovs
   virt_net:
     name: "{{ item.bridge }}"
     xml: '{{ lookup("template", "ovsBrTemplate.xml") }}'
@@ -53,7 +53,7 @@
   when: networkMode == "openVSwitch"
 
 - name: Autostart virtual networks
-  tags: networkovs
+  tags: kvm, network, ovs
   virt_net:
     name: "{{ item.bridge }}"
     autostart: yes
@@ -61,7 +61,7 @@
   when: networkMode == "openVSwitch"
 
 - name: Activate virtual networks
-  tags: networkovs
+  tags: kvm, network, ovs
   virt_net:
     name: "{{ item.bridge }}"
     state: active
@@ -69,7 +69,7 @@
   when: networkMode == "openVSwitch"
 
 - name: Define mainPool storage in libvirt
-  tags: virtualization, config2
+  tags: kvm, storage
   virt_pool:
     autostart: yes
     command: define
@@ -77,26 +77,26 @@
     xml: '{{ lookup("template", "mainPool.xml") }}'
 
 - name: Get mainPool storage facts
-  tags: config3
+  tags: kvm, storage
   virt_pool:
     command: facts
 
 - name: Build mainPool storage
-  tags: virtualization, config2
+  tags: kvm, storage
   virt_pool:
     command: build
     name: mainPool
   when: ansible_libvirt_pools.mainPool.status != "running"
 
 - name: Start mainPool storage
-  tags: virtualization, config2
+  tags: kvm, storage
   virt_pool:
     command: create
     name: mainPool
   when: ansible_libvirt_pools.mainPool.status != "running"
 
 - name: Activate mainPool storage
-  tags: virtualization, config2
+  tags: kvm, storage
   virt_pool:
     state: active
     name: mainPool
