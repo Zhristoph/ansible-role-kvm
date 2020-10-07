@@ -1,3 +1,4 @@
 libvirtStorageDir: /srv/libvirt/images
 networkMode: bridged
+openVSwitchConfig: []
 
