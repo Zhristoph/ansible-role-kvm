@@ -1,0 +1,9 @@
+- name: KVM
+  hosts: kvm
+  become: yes
+  gather_facts: no
+  roles:
+    - kvm
+    - open_vswitch
+    - smartd
+

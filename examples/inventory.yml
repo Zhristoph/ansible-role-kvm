@@ -1,0 +1,8 @@
+all:
+  hosts:
+  children:
+    kvm:
+      hosts:
+        kvmserver01:
+        kvmserver02:
+        kvmserver03:
